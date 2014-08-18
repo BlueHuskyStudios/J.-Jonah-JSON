@@ -2,6 +2,7 @@ package org.bh.tools.util.json;
 
 import java.util.Objects;
 import static org.bh.tools.util.json.Do.eq;
+import static org.bh.tools.util.json.Do.s2;
 
 /**
  * JSONPair, made for J. Jonah JSON NetBeans Project, is copyright Blue Husky Programming ©2013
@@ -60,8 +61,8 @@ public class JSONPair<T>
 	public String toString()
 	{
 		return "\"" + name + "\":" +
-			// ^ This is a single-character String instead of a char to force a toString on name and value
-			stringify(value);
+			// ^ This is a single-character String instead of a char to force a toString on name
+			s2(value);
 	}
 
 	@Override
@@ -86,38 +87,5 @@ public class JSONPair<T>
 		if (!eq(value, other.value))
 			return false;
 		return true;
-	}
-	
-	
-	
-	/**
-	 * 
-	 *	<UL>
-	 *		<LI>If the value is an array, all elements are recursively stringified, separated by commas ({@code ,}), and
-	 *			surrounded by square brackets ({@code []})</LI>
-	 *		<LI>Else, if the value is a CharSequence, the value is surrounded by quotes ({@code ""})</LI>
-	 *		<LI>Else, the value is passed through {@link String#valueOf(java.lang.Object)}</LI>
-	 *	</UL>
-	 * @param o
-	 * @return 
-	 */
-	public static String stringify(Object o)
-	{
-		if (o instanceof Object[])
-		{
-			StringBuilder sb = new StringBuilder("[");
-			for(int i = 0, l = ((Object[])o).length; i < l; i++)
-			{
-				sb.append(stringify(((Object[])o)[i]));
-				if (i != l - 1)
-					sb.append(',');
-			}
-			return sb.append(']').toString();
-		}
-		if (o instanceof CharSequence)
-			return "\"" + o + '\"';
-		if (o instanceof JSONPair)
-			return "{" + o + "}";
-		return String.valueOf(o);
 	}
 }
