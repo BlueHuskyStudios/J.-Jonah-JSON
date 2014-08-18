@@ -8,7 +8,7 @@
 		"won": 1,
 		"too": "two",
 		"tree": 3.0,
-		"fore": .4
+		"fore": 0.4
 	},
 	"complex object": {
 		"colors": ["red", "green", "blue", "alpha"],
@@ -21,5 +21,13 @@
 			{"least": ["slate", "Stael", "stale", "steal", "tales", "teals", "Tesla"]}
 		]
 	},
-	"Empty JSONObject": {}
+	"Empty JSONObject": {},
+	"Empty JSONObjects": {"1":{"2":{}, "more": [{},{},{},{"last one": {}}]}},
+	"Empty Arrays": [[[], [[],[],[],[[]]]]],
+	"Some value terminators": ["]","}",","],
+	"Happy difficult strings": ["\"", "\\","\\\\\",\\"],
+	"Array of strings of array delimiters": ["[","]","[]","]","[","]["],
+	"Array of strings of object delimiters": ["{","}","{}","}","{","}{"],
+	"Object of strings of array delimiters": {"[":"]","[]":"]","[":"]["},
+	"Object of strings of object delimiters": {"{":"}","{}":"}","{":"}{"}
 }

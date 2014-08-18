@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -87,5 +88,34 @@ public class JSONObject implements JSONable
 		for (JSONPair pair : jsono.pairs.values())
 			add(pair);
 		return this;
+	}
+
+	@Override
+	public int hashCode()
+	{
+		int hash = 5;
+		hash = 89 * hash + Objects.hashCode(this.pairs);
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (obj == null)
+			return false;
+		if (!(obj instanceof JSONObject))
+			return false;
+		final JSONObject other = (JSONObject) obj;
+		if (pairs == other.pairs)
+			return true;
+		for (CharSequence key: pairs.keySet())
+		{
+			if (!other.pairs.containsKey(key))
+				return false;
+			if (! other.pairs.get(key).value
+				.equals(pairs.get(key).value))
+				return false;
+		}
+		return true;
 	}
 }
