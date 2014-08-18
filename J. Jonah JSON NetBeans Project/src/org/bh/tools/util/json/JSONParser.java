@@ -172,7 +172,7 @@ public class JSONParser
 						ret.set(key, string);
 					else
 						key = string;
-					if (string.toString().equals("definition"))
+					if (string.toString().equals("Some value terminators"))
 						System.out.print("");
 					continue mainParser;
 				}
@@ -227,8 +227,10 @@ public class JSONParser
 	}
 
 	/**
-	 * Uses a Java internal JavaScript engine to hardcodedParse the given JSON string. This may fail if your version of Java has no such
-	 * engine. If it does fail, try using {@link #hardcodedParse(java.lang.CharSequence)} instead.
+	 * Uses a Java internal JavaScript engine to hardcodedParse the given JSON string. This may fail if your version of Java
+	 * has no such engine. If it does fail, try using {@link #hardcodedParse(java.lang.CharSequence)} instead. Also note that
+	 * there is a VERY significant overhead to using this method the first time (up to 1 second) due to javascript engine
+	 * initialization.
 	 * 
 	 * @param json the string containing a valid JSON object to parse. JS comments and whitepace are O.K.
 	 * @return the given string, parsed as a {@link JSONObject}
@@ -328,7 +330,7 @@ public class JSONParser
 	 * Makes {@link #hardcodedParse(java.io.InputStream)} and {@link #softcodedParse(java.io.InputStream)} easier to write and
 	 * maintain by abstracting the input process
 	 */
-	private static String bringIn(InputStream is) throws IOException
+	static String bringIn(InputStream is) throws IOException
 	{
 		int read;
 		ArrayList<Byte> inList = new ArrayList<>();
@@ -417,75 +419,6 @@ public class JSONParser
 			return Long.valueOf(mystery+"");
 		else
 			throw new InvalidJSONException("Illegal value (possibly unquoted string?): " + mystery);
-	}
-	
-	public static void main(String... args) throws FileNotFoundException, IOException
-	{
-//		CharSequence test = new StringBuilder();
-//		File input = new File("U:\\Libraries\\Programs\\Github\\Open-Dictionary-Project\\concept.json");
-		File input = new File("basic.json");
-		FileInputStream fis = new FileInputStream(input);
-		String json = bringIn(fis);
-//		JSONObject test = hardcodedParse(fis);
-		/*Scanner scan = new Scanner(input);
-		Pattern everything = Pattern.compile("", Pattern.DOTALL | Pattern.MULTILINE);
-		while (scan.hasNext(everything))
-			test.append(scan.next(everything));*/
-//		System.out.println(test);
-//		System.out.println(removeWhitespace(test));
-		
-		System.out.println("Parsing the following string: \r\n"
-				+ " \t" + json);
-		
-		double hardTotal = 0, softTotal = 0;
-		int limit = 1;
-		
-		System.out.println("Testing both methods " + limit + " times...");
-		for (int i = 0; i < limit; i++)
-		{
-			long start, key1, key2, key3;
-
-			JSONObject jsono;
-
-			start = System.nanoTime();
-			jsono = JSONParser.hardcodedParse(json);
-			key1 = System.nanoTime();
-
-			String hard = jsono.toString();
-
-			key2 = System.nanoTime();
-			jsono = JSONParser.softcodedParse(json);
-			key3 = System.nanoTime();
-
-			String soft = jsono.toString();
-
-
-//			System.out.println(findDifference(hard, soft));
-
-			double
-				hardHere = ((key1 - start) / 1_000_000.0),
-				softHere = ((key3 - key2) / 1_000_000.0);
-			/*System.out.println(
-				"test " + i + "\r\n" +
-				"\thard: " + hardHere + "ms\r\n" + 
-				"\tsoft: " + softHere + "ms"
-			);*/
-
-			hardTotal += ((key1 - start) / 1_000_000.0);
-			softTotal += ((key3 - key2) / 1_000_000.0);
-		}
-		System.out.println("\r\n==== " + limit + " TESTS LATER ====\r\n");
-		System.out.println(
-			"hardTotal: " + hardTotal + "ms; average: " + (hardTotal / limit) + "ms \r\n" +
-			"softTotal: " + softTotal + "ms; average: " + (softTotal / limit) + "ms \r\n"
-		);
-		
-		JSONObject hard = JSONParser.hardcodedParse(json);
-		JSONObject soft = JSONParser.softcodedParse(json);
-		
-		System.out.println("\r\nHardcoded interpreter result: " + hard);
-		System.out.println("\r\nSoftcoded interpreter result: " + soft);
-		System.out.println("\r\nEqual? " + hard.equals(soft));
 	}
 
 	private static Object[] hardcodedParseArray(CharSequence array)

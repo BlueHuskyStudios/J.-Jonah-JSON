@@ -1,11 +1,11 @@
 package org.bh.tools.util.json;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import jdk.nashorn.api.scripting.JSObject;
 
@@ -17,11 +17,115 @@ import jdk.nashorn.api.scripting.JSObject;
  */
 public class Test
 {
-	/**
-	 * Tests the JSONObject and JSONPair
-	 * @param args unused
-	 */
-	public static void main(String[] args) throws ScriptException
+	public static void main(String[] args) throws IOException
+	{
+		inputTests(true, 1);
+	}
+	
+	public static void inputTests(boolean throwAwayFirstTest, int numberOfTests) throws FileNotFoundException, IOException
+	{
+//		CharSequence test = new StringBuilder();
+//		File input = new File("U:\\Libraries\\Programs\\Github\\Open-Dictionary-Project\\concept.json");
+		File input = new File("test.json");
+		FileInputStream fis = new FileInputStream(input);
+		String json = JSONParser.bringIn(fis);
+//		JSONObject test = hardcodedParse(fis);
+		/*Scanner scan = new Scanner(input);
+		Pattern everything = Pattern.compile("", Pattern.DOTALL | Pattern.MULTILINE);
+		while (scan.hasNext(everything))
+			test.append(scan.next(everything));*/
+//		System.out.println(test);
+//		System.out.println(removeWhitespace(test));
+		
+		System.out.println("Parsing the following string: \r\n"
+				+ " \t" + json);
+		
+		double hardTotal = 0, softTotal = 0;
+		long start, key1, key2, key3, hardTest1Overhead = 0, softTest1Overhead = 0;
+		
+		if (throwAwayFirstTest)
+		{
+			System.out.println("Throwing away first test...");
+			
+			start = System.nanoTime();
+			JSONParser.hardcodedParse(json);
+			key1 = System.nanoTime();
+			hardTest1Overhead = key1 - start;
+			
+			start = System.nanoTime();
+			JSONParser.softcodedParse(json);
+			key1 = System.nanoTime();
+			softTest1Overhead = key1 - start;
+		}
+		
+		System.out.println("Testing both methods " + numberOfTests + " times...");
+		long lastTimerOutput = System.nanoTime();
+		for (int i = 0; i < numberOfTests; i++)
+		{
+			JSONObject jsono;
+
+			start = System.nanoTime();
+			jsono = JSONParser.hardcodedParse(json);
+			key1 = System.nanoTime();
+
+			String hard = jsono.toString();
+
+			key2 = System.nanoTime();
+			jsono = JSONParser.softcodedParse(json);
+			key3 = System.nanoTime();
+
+			String soft = jsono.toString();
+
+
+//			System.out.println(findDifference(hard, soft));
+
+			double
+				hardHere = ((key1 - start) / 1_000_000.0),
+				softHere = ((key3 - key2) / 1_000_000.0);
+			/*System.out.println(
+				"test " + i + "\r\n" +
+				"\thard: " + hardHere + "ms\r\n" + 
+				"\tsoft: " + softHere + "ms"
+			);*/
+
+			hardTotal += hardHere;
+			softTotal += softHere;
+			
+			if ((start - lastTimerOutput) > 1_000_000_000) // every second
+			{
+				System.out.print((int)(((double)i / numberOfTests) * 100) + "%... ");
+				lastTimerOutput = System.nanoTime();
+			}
+		}
+		System.out.println("\r\n==== " + numberOfTests + " TESTS LATER ====\r\n");
+		double hardAvg = (hardTotal / numberOfTests), softAvg = (softTotal / numberOfTests);
+		
+		System.out.println(
+			"hardTotal: " + hardTotal + "ms; average: " + hardAvg + "ms \r\n" +
+			"softTotal: " + softTotal + "ms; average: " + softAvg + "ms \r\n"
+		);
+		if (throwAwayFirstTest)
+		{
+			double
+				ht1o = (hardTest1Overhead / 1_000_000.0 - hardAvg),
+				st1o = (softTest1Overhead / 1_000_000.0 - softAvg);
+			
+			System.out.println(
+				"First test overhead:\r\n" +
+					" \thard: " + ht1o + "ms \r\n" +
+					" \tsoft: " + st1o + "ms \r\n"
+			);
+		}
+		
+		JSONObject hard = JSONParser.hardcodedParse(json);
+		JSONObject soft = JSONParser.softcodedParse(json);
+		
+		System.out.println("\r\nHardcoded interpreter result: " + hard);
+		System.out.println("\r\nSoftcoded interpreter result: " + soft);
+		System.out.println("\r\nEqual? " + hard.equals(soft));
+	}
+	
+	public static void buildTests() throws ScriptException
 	{
 		long start, key1, key2, key3;
 		start = System.nanoTime();
