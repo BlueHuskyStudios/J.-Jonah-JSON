@@ -49,11 +49,47 @@ public class Do
 	/**
 	 * A way to safely convert the given object to a string with a tiny method name. Works best along with a static import.
 	 * 
-	 * @param o the object to stringify
-	 * @return the result of passing {@code o} to {@link String#valueOf(Object)}
+	 *	<UL>
+	 *		<LI>If the value is an array, all elements are recursively stringified, separated by commas ({@code ,}), and
+	 *			surrounded by square brackets ({@code []})</LI>
+	 *		<LI>Else, the value is passed through {@link String#valueOf(Object)}</LI>
+	 *	</UL>
+	 * @param o the object to be stringified
+	 * @return the {@code String} version of the given object
 	 */
 	public static String s(Object o)
 	{
+		if (o instanceof Object[])
+		{
+			StringBuilder sb = new StringBuilder("[");
+			for(int i = 0, l = ((Object[])o).length; i < l; i++)
+			{
+				sb.append(s(((Object[])o)[i]));
+				if (i != l - 1)
+					sb.append(',');
+			}
+			return sb.append(']').toString();
+		}
+		if (o instanceof JSONPair)
+			return "{" + o + '}';
 		return String.valueOf(o);
+	}
+	
+	/**
+	 * A way to safely convert the given object to a string with a tiny method name, while putting character sequences in
+	 * quotes. Works best along with a static import.
+	 * 
+	 *	<UL>
+	 *		<LI>If the value is a CharSequence, the value is surrounded by quotes ({@code ""})</LI>
+	 *		<LI>Else, the value is passed through {@link #s(Object)}</LI>
+	 *	</UL>
+	 * @param o the object to be stringified
+	 * @return the {@code String} version of the given object
+	 */
+	public static String s2(Object o)
+	{
+		if (o instanceof CharSequence)
+			return "\"" + o + '\"';
+		return s(o);
 	}
 }
