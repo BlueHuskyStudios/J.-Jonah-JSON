@@ -74,4 +74,18 @@ public class JSONObject implements JSONable
             sb.append(',');
         }
 	}
+
+	/**
+	 * Adds all new values in the given object to this one, and replaces any existing values.
+	 * 
+	 * @param jsono the object containing all the new values.
+	 * @return this
+	 */
+	@Override
+	public JSONable fromJSONObject(JSONObject jsono)
+	{
+		for (JSONPair pair : jsono.pairs.values())
+			add(pair);
+		return this;
+	}
 }
