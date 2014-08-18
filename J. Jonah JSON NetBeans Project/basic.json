@@ -1,0 +1,12 @@
+{
+    "number": 12,
+    "string": "hello world!",
+    "array": [
+        1,
+        false,
+        "yay"
+    ],
+    "sub-object": {
+        "pretty": "cool"
+    }
+}
