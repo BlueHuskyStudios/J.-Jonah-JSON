@@ -1,25 +1,24 @@
 package org.bh.tools.util.json;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
-import java.util.regex.Pattern;
+import static org.bh.tools.util.json.Do.eq;
+import static org.bh.tools.util.json.Do.s;
 
 /**
  * JSONPair, made for J. Jonah JSON NetBeans Project, is copyright Blue Husky Programming ©2013
  * 
  * @author Kyli of Blue Husky Programming
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2014-08-11
+ *		- 1.1.0 (2014-08-11) Kyli Rouge added hashCode() and equals(Object)
  *		- 1.0.0 (2014-08-11) Kyli Rouge created JSONObject
  */
 public class JSONObject implements JSONable
 {
-	HashMap<CharSequence, JSONPair> pairs;
+	HashMap<String, JSONPair> pairs;
 	
 	public JSONObject()
 	{
@@ -28,26 +27,28 @@ public class JSONObject implements JSONable
 	
 	public <T> T get(CharSequence name)
 	{
-		return (T)getPair(name).value;
+		return (T)getPair(s(name)).value;
 	}
 	public <T> JSONPair<T> getPair(CharSequence name)
 	{
-		return pairs.get(name);
+		return pairs.get(s(name));
 	}
 	
 	@SuppressWarnings("Convert2Diamond") // I feel more secure explicitly stating it here
 	public <T> JSONObject set(CharSequence name, T newValue)
 	{
-		if (pairs.containsKey(name))
-			pairs.get(name).value = newValue;
+		String sName = s(name);
+		
+		if (pairs.containsKey(sName))
+			pairs.get(sName).value = newValue;
 		else
-			pairs.put(name, new JSONPair<T>(name, newValue));
+			pairs.put(sName, new JSONPair<T>(sName, newValue));
 		return this;
 	}
 	
 	public <T> JSONObject add(JSONPair newPair)
 	{
-		pairs.put(newPair.name, newPair);
+		pairs.put(s(newPair.name), newPair);
 		return this;
 	}
 
@@ -60,14 +61,14 @@ public class JSONObject implements JSONable
 	@Override
 	public String toString()
 	{
-        Iterator<Entry<CharSequence,JSONPair>> i = pairs.entrySet().iterator();
-        if (! i.hasNext())
+        Iterator<Entry<String,JSONPair>> i = pairs.entrySet().iterator();
+        if (!i.hasNext())
             return "{}";
 
         StringBuilder sb = new StringBuilder();
         sb.append('{');
         for (;;) {
-            Entry<CharSequence,JSONPair> e = i.next();
+            Entry<String,JSONPair> e = i.next();
             JSONPair pair = e.getValue();
             sb.append(pair.value == this ? "\"" + pair.name + "\":\"this JSON object\"" : pair);
             if (! i.hasNext())
@@ -108,12 +109,13 @@ public class JSONObject implements JSONable
 		final JSONObject other = (JSONObject) obj;
 		if (pairs == other.pairs)
 			return true;
-		for (CharSequence key: pairs.keySet())
+		for (String key: pairs.keySet())
 		{
 			if (!other.pairs.containsKey(key))
 				return false;
-			if (! other.pairs.get(key).value
-				.equals(pairs.get(key).value))
+			if (!eq(
+				other.pairs.get(key).value,
+				      pairs.get(key).value))
 				return false;
 		}
 		return true;
