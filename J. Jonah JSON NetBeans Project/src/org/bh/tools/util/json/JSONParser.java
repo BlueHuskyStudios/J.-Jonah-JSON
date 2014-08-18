@@ -41,24 +41,26 @@ public class JSONParser
 	/** <code>/\*.*?\*&#47;s</code> */
 	public static final Pattern COMMENT_BLOCK = Pattern.compile("\\*.*?\\*", Pattern.DOTALL);
 	/** {@code /\/\/.?$/m} */
-	public static final Pattern COMMENT_LINE = Pattern.compile("//.?$", Pattern.MULTILINE);
+	public static final Pattern COMMENT_LINE  = Pattern.compile("//.?$", Pattern.MULTILINE);
 	/** <code>/(\*.*?\*)|(\/\/.?$)&#47;sm</code> */
-	public static final Pattern COMMENT_ANY = Pattern.compile(
+	public static final Pattern COMMENT_ANY   = Pattern.compile(
 			"(" + COMMENT_BLOCK.pattern() + ")|(" + COMMENT_LINE.pattern() + ')',
 			Pattern.DOTALL | Pattern.MULTILINE);
 	
 	/** {@code /".*?"/} */
-	public static final Pattern STRING = Pattern.compile("[" + STRING_START_END + "].*?[" + STRING_START_END + "]");
+	public static final Pattern STRING  = Pattern.compile("[" + STRING_START_END + "].*?[" + STRING_START_END + "]");
 	/** {@code /(true)|(false)/} */
 	public static final Pattern BOOLEAN = Pattern.compile("(true)|(false)");
+	/** {@code /(true)|(false)/} */
+	public static final Pattern NULL    = Pattern.compile("(null)");
 	/** {@code /\d+/} */
 	public static final Pattern INTEGER = Pattern.compile("\\d+");
 	/** {@code /\d*\.\d+/} */
-	public static final Pattern FLOAT = Pattern.compile("\\d*\\.\\d+");
+	public static final Pattern FLOAT   = Pattern.compile("\\d*\\.\\d+");
 	/** {@code /\[.+?(,.+?)*?\]/} */
-	public static final Pattern ARRAY = Pattern.compile("\\[([^,]+?(,[^,]+?)*?)?\\]");
+	public static final Pattern ARRAY   = Pattern.compile("\\[([^,]+?(,[^,]+?)*?)?\\]");
 	/** {@code /\{".*?":.*?(,".*?":.*?)*?\}/} */
-	public static final Pattern OBJECT = Pattern.compile("\\{(" + STRING.pattern() + ":.*?(," + STRING.pattern() + ":.*?)*?)?\\}");
+	public static final Pattern OBJECT  = Pattern.compile("\\{(" + STRING.pattern() + ":.*?(," + STRING.pattern() + ":.*?)*?)?\\}");
 	
 	private static final NoClassDefFoundError NO_COMPATIBLE_JS_ENGINE;
 	private static ScriptEngine js;
@@ -100,25 +102,24 @@ public class JSONParser
 		
 		//<editor-fold defaultstate="collapsed" desc="Basic Validation">
 		if (json.length() < 2) // no valid JSON string is less than 2 characters
-			throw new IllegalArgumentException("JSON must be at least {}");
+			throw new IllegalArgumentException("JSON must be at least " + OBJECT_START + OBJECT_END);
 		char current = json.charAt(0);
 		if (current != '{') // all JSON strings must start with a {, since we already removed whitespace and comments
-			throw new IllegalArgumentException("JSON must start with {");
+			throw new IllegalArgumentException("JSON must start with " + OBJECT_START);
 		
 		JSONObject ret = new JSONObject();
 		
 		if (json.length() == 2) // there's only 1 possible JSON string that's 2 charactersL {}
-			if (json.equals("{}")) // if it is {},
+			if (json.equals("" + OBJECT_START + OBJECT_END)) // if it is {}...
 				return ret; // return an empty JSON object
 			else
-				throw new IllegalArgumentException("two-character JSON must be {}"); // nahp dun care what it is it's WRONG
+				throw new IllegalArgumentException("two-character JSON must be " + OBJECT_START + OBJECT_END); // nahp dun care what it is it's WRONG
 		//</editor-fold>
 
 		//<editor-fold defaultstate="collapsed" desc="parser objects">
 		// if we're parsing a string
 //		boolean inString = false;
 		// for building strings
-		StringBuilder string = new StringBuilder();
 		StringBuilder mystery = new StringBuilder();
 		// if we're parsing an array
 		//boolean inArray = false; - unneeded since hardcodedParseArray
@@ -131,7 +132,7 @@ public class JSONParser
 		// this is a lookback so we can think about what's already happened
 		char prev = current;
 		// is this a double-quoted string?
-		boolean dqString = true; // usually true
+//		boolean dqString = true; // usually true - unused since nested loops were utilized
 		// since we already confirmed that the first character is {, we start on the second.
 		current = json.charAt(1);
 		// our key
@@ -140,109 +141,83 @@ public class JSONParser
 		//</editor-fold>
 		
 		try{
-		mainParser: for(
-			int l = json.length();
-			i < l;
-			prev = current,
-				current = i++ >= l - 1
-					? json.charAt(l - 1)
-					: json.charAt(i))
-		{
-			if (string != null && string.toString().equals("definition"))
-				System.out.println("definition!");
-			if (isStringStartEnd(current) && prev != STRING_ESCAPE_START)
+			mainParser: for(
+				int l = json.length();
+				i < l;
+				prev = current,
+					current = ++i > l - 1
+						? json.charAt(l - 1)
+						: json.charAt(i))
 			{
-				if (!inString) // if this is the beginning of a new string
+				if (isStringStartEnd(current) && prev != STRING_ESCAPE_START)
 				{
-					inString = true;
-					string = new StringBuilder();
-					dqString = current == '"';
-				}
-				else if (dqString ? current == '"' : current == '\'') // if this is the end of a string
-				{
-					inString = false;
-					// increment the character to validate
-					//prev = current; // prev will be our quote
+					char quote = current;
+					StringBuilder string = new StringBuilder();
+					prev = current;
 					current = json.charAt(++i);
-					
-					// "string" is our string!
-					if (inVal) // if we're in a value
+
+					for(;
+						i < l;
+						prev = current,
+							current = ++i > l - 1
+								? json.charAt(l - 1)
+								: json.charAt(i))
 					{
-						/*if (inArray) // if we're in an array
-						{
-							array.add(string.toString()); // quote the string and add it to the array
-							if (current == ARRAY_END) // if this is the end of an array
-							{
-								inArray = inVal = false; // then both the array and this value are over
-								ret.set(key, array.toArray()); // add this array to the object
-							}
-						}
-						else // if we're not in an array, then the value is over*/
-						{
-							inVal = false;
-							// all values must be followed by a comma, end bracket, or end brace
-							if (!isValueEnd(current))
-								throw new InvalidJSONException("All values must be followed by one of (" + VALUE_END + ")", json, i, ret);
-							ret.set(key, string);
-							inVal = false;
-						}
-						if (!inVal && i == l - 1)
-							break mainParser;
+						if (current != quote && current != STRING_ESCAPE_START)
+							string.append(current);
+						else if (prev != STRING_ESCAPE_START)
+							break;
 					}
-					else // if we're in a key
-					{
-						inVal = true; // the next string will be a value.
+					if (inVal)
+						ret.set(key, string);
+					else
 						key = string;
-						if (current != KEY_END) // all keys must be followed by a colon
-							throw new InvalidJSONException("All keys must be followed by (" + KEY_END + ")", json, i, ret);
+					if (string.toString().equals("definition"))
+						System.out.print("");
+					continue mainParser;
+				}
+				else if (current == OBJECT_START) // if we're entering a sub-object
+				{
+					CharSequence innerObject = getInnerString(json, i, OBJECT_START, OBJECT_END); // extract the inner object
+					JSONObject val = JSONParser.hardcodedParse(innerObject); // recursively parse that object
+					current = json.charAt(i += innerObject.length()); // remember to properly place that counter
+					inVal = false; // we're done with this value
+					ret.set(key, val);
+					continue mainParser;
+				}
+				else if (current == ARRAY_START)
+				{
+					CharSequence innerArray = getInnerString(json, i, ARRAY_START, ARRAY_END); // extract the inner object
+					Object[] val = JSONParser.hardcodedParseArray(innerArray); // recursively parse that object
+					current = json.charAt(i += innerArray.length()); // remember to properly place that counter
+					inVal = false; // we're done with this value
+					ret.set(key, val);
+					continue mainParser;
+				}
+				else if (current == KEY_END)
+				{
+					inVal = true;
+					continue mainParser;
+				}
+				else if (isValueEnd(current))
+				{
+					inVal = false;
+					if (mystery.length() != 0) // if we're parsing a mystery value (hopefully primitive)
+					{
+						Object primitive = makePrimitive(mystery);
+						/*if (inArray)
+							array.add(primitive);
+						else*/
+							ret.set(key, primitive); // make a primitive out of it and add it to the object
+						mystery = new StringBuilder(); // reset the mystery builder
+						continue mainParser;
 					}
+					else // we've probably already parsed it. Just move on to the next one
+						continue mainParser;
 				}
 				else
-					string.append(current);
-				continue mainParser;
+					mystery.append(current);
 			}
-			else if (inString)
-			{
-				string.append(current);
-				continue mainParser;
-			}
-			else if (current == OBJECT_START) // if we're entering a sub-object
-			{
-				CharSequence innerObject = getInnerString(json, i, OBJECT_START, OBJECT_END); // extract the inner object
-				JSONObject val = JSONParser.hardcodedParse(innerObject); // recursively parse that object
-				current = json.charAt(i += innerObject.length()); // remember to properly place that counter
-				inVal = false; // we're done with this value
-				ret.set(key, val);
-				continue mainParser;
-			}
-			else if (current == ARRAY_START)
-			{
-				CharSequence innerArray = getInnerString(json, i, ARRAY_START, ARRAY_END); // extract the inner object
-				Object[] val = JSONParser.hardcodedParseArray(innerArray); // recursively parse that object
-				current = json.charAt(i += innerArray.length()); // remember to properly place that counter
-				inVal = false; // we're done with this value
-				ret.set(key, val);
-				continue mainParser;
-			}
-			else if (isValueEnd(current))
-			{
-				inVal = false;
-				if (mystery.length() != 0) // if we're parsing a mystery value (hopefully primitive)
-				{
-					Object primitive = makePrimitive(mystery);
-					/*if (inArray)
-						array.add(primitive);
-					else*/
-						ret.set(key, primitive); // make a primitive out of it and add it to the object
-					mystery = new StringBuilder(); // reset the mystery builder
-					continue mainParser;
-				}
-				else // we've probably already parsed it. Just move on to the next one
-					continue mainParser;
-			}
-			else
-				mystery.append(current);
-		}
 		}
 		catch(Throwable t)
 		{
@@ -262,6 +237,7 @@ public class JSONParser
 	 * @throws NoClassDefFoundError if there is no compatible JavaScript engine. If this is thrown, try using
 	 *         {@link #hardcodedParse(java.lang.CharSequence)} instead
 	 */
+	@SuppressWarnings({"BroadCatchBlock", "TooBroadCatch"})
 	public static JSONObject softcodedParse(CharSequence json) throws InvalidJSONException, NoClassDefFoundError
 	{
 		try
@@ -311,18 +287,56 @@ public class JSONParser
 	}
 	
 	/**
+	 * Attempts to use {@link #softcodedParse(java.lang.CharSequence)}. If this fails in a way we might expect, then
+	 * {@link #hardcodedParse(java.lang.CharSequence)} is attempted.
+	 * 
+	 * @param json the string containing a valid JSON object to parse. JS comments and whitepace are O.K.
+	 * @return the given string, parsed as a {@link JSONObject}
+	 * 
+	 * @throws InvalidJSONException if the given object is not valid JSON
+	 */
+	public static JSONObject tryBothParse(CharSequence json)
+	{
+		try
+		{
+			return softcodedParse(json);
+		}
+		catch (InvalidJSONException | NoClassDefFoundError t)
+		{
+			return hardcodedParse(json);
+		}
+	}
+	
+	
+	/**
+	 * Attempts to use {@link #softcodedParse(java.lang.CharSequence)}. If this fails in a way we might expect, then
+	 * {@link #hardcodedParse(java.lang.CharSequence)} is attempted.
+	 * 
+	 * @param json the stream to read. It should result in a string containing a valid JSON object to parse. JS
+	 *        comments and whitepace are O.K.
+	 * @return the given string, parsed as a {@link JSONObject}
+	 * 
+	 * @throws IOException if the given {@link InputStream} throws an {@link IOException} at any time for any reason.
+	 * @see #hardcodedParse(java.lang.CharSequence)
+	 */
+	public static JSONObject tryBothParse(InputStream json) throws IOException
+	{
+		return tryBothParse(bringIn(json));
+	}
+	
+	/**
 	 * Makes {@link #hardcodedParse(java.io.InputStream)} and {@link #softcodedParse(java.io.InputStream)} easier to write and
-	 * maintain
+	 * maintain by abstracting the input process
 	 */
 	private static String bringIn(InputStream is) throws IOException
 	{
 		int read;
-		ArrayList<Integer> inList = new ArrayList<>();
+		ArrayList<Byte> inList = new ArrayList<>();
 		while ((read = is.read()) != -1)
-			inList.add(read);
+			inList.add((byte)read);
 		byte[] ints = new byte[inList.size()];
 		for(int i = 0; i < ints.length; i++)
-			ints[i] = (byte)(int)inList.get(i);
+			ints[i] = (byte)inList.get(i);
 		return new String(ints);
 	}
 	
@@ -394,7 +408,7 @@ public class JSONParser
 	public static Object makePrimitive(CharSequence mystery)
 	{
 		if (STRING.matcher(mystery).matches())
-			return String.valueOf(mystery);
+			return String.valueOf(mystery.subSequence(1, mystery.length() - 1)); // strip the quotes and return the internal string
 		if (BOOLEAN.matcher(mystery).matches())
 			return Boolean.valueOf(mystery+"");
 		else if (FLOAT.matcher(mystery).matches())
@@ -408,7 +422,8 @@ public class JSONParser
 	public static void main(String... args) throws FileNotFoundException, IOException
 	{
 //		CharSequence test = new StringBuilder();
-		File input = new File("U:\\Libraries\\Programs\\Github\\Open-Dictionary-Project\\concept.json");
+//		File input = new File("U:\\Libraries\\Programs\\Github\\Open-Dictionary-Project\\concept.json");
+		File input = new File("test.json");
 		FileInputStream fis = new FileInputStream(input);
 		String json = bringIn(fis);
 //		JSONObject test = hardcodedParse(fis);
@@ -465,8 +480,12 @@ public class JSONParser
 			"softTotal: " + softTotal + "ms; average: " + (softTotal / limit) + "ms \r\n"
 		);
 		
-		System.out.println("Hardcoded interpreter result: " + JSONParser.hardcodedParse(json));
-		System.out.println("Softcoded interpreter result: " + JSONParser.softcodedParse(json));
+		JSONObject hard = JSONParser.hardcodedParse(json);
+		JSONObject soft = JSONParser.softcodedParse(json);
+		
+		System.out.println("\r\nHardcoded interpreter result: " + hard);
+		System.out.println("\r\nSoftcoded interpreter result: " + soft);
+		System.out.println("\r\nEqual? " + hard.equals(soft));
 	}
 
 	private static Object[] hardcodedParseArray(CharSequence array)
@@ -486,34 +505,55 @@ public class JSONParser
 			int l = array.length() - 1;
 			i < l;
 //			prev = current,
-				current = array.charAt(++i))
+				current = array.charAt(i < l ? ++i : l - 1))
 		{
-			if (current == ARRAY_START)
+			/* Note that each of these if statements is only going to look at the first character of the value */
+			
+			if (current == ARRAY_START) // if this value is a nested array
 			{
-				CharSequence innerArray = getInnerString(array, i, ARRAY_START, ARRAY_END);
-				ret.add(hardcodedParseArray(innerArray));
-				i += innerArray.length();
+				CharSequence nestedArray = getInnerString(array, i, ARRAY_START, ARRAY_END); // extract the text of the array
+				ret.add(hardcodedParseArray(nestedArray)); // recursively use this method to parse the array and add it
+				i += nestedArray.length(); // make sure our counter is placed just after the nested array
 				continue;
 			}
-			else if (current == OBJECT_START)
+			else if (current == OBJECT_START) // if this value is an object
 			{
-				CharSequence innerObject = getInnerString(array, i, OBJECT_START, OBJECT_END);
-				ret.add(hardcodedParse(innerObject));
-				i += innerObject.length();
+				CharSequence innerObject = getInnerString(array, i, OBJECT_START, OBJECT_END); // extract the text of the object
+				ret.add(hardcodedParse(innerObject)); // use hardcodedParse to parse the object and add it
+				i += innerObject.length(); // make sure our counter is placed just after the object
 				continue;
 			}
-			else if (isValueEnd(current)) // if this is the end of a value
+			/*else if (isValueEnd(current)) // if this is the end of a value - not needed since internal loops are used
 			{
+				ret.add(makePrimitive(val)); // since it wasn't an array or object, it's a primitive
+				val = new StringBuilder(); // reset the value builder for the next one
+				continue;
+			}*/
+			else if (isStringStartEnd(current)) // if we're in a string, we want to ignore value enders
+			{
+				CharSequence innerString = getInnerString(array, i, current); // getInnerString returns the string, but not its quotes
+				ret.add(innerString);
+				i += innerString.length() + 2; // properly offset i, accounting for the stripped quotes
+				val = new StringBuilder();
+				continue;
+			}
+			else // some value that's not an array, object, or string
+			{
+				for(; i < l; current = array.charAt(++i)) // make a sub-loop mimicing the major one
+				{
+					if (isValueEnd(current)) // if we're at the end of the value
+						break;
+					else
+						val.append(current);
+				}
+				
 				ret.add(makePrimitive(val));
 				val = new StringBuilder();
 				continue;
 			}
-			else
-			{
-				val.append(current);
-				continue;
-			}
 		}
+		if (val.length() != 0) // if we've yet to process the last item
+			ret.add(makePrimitive(val));
 		
 		return ret.toArray();
 	}
@@ -521,7 +561,8 @@ public class JSONParser
 	/**
 	 * Returns a substring surrounded by the given characters. If another start character is found, its corresponding end
 	 * character is ignored.
-	 * For example, when given ("[lol, [herp, [derp, qwerp]], smrt, [yay, fun]]", 6, '[', ']'), it will return "[herp, [derp, qwerp]]".
+	 * For example, when given {@code ("[lol, [herp, [derp, qwerp]], smrt, [yay, fun]]", 6, '[', ']')}, it will return
+	 * {@code "[herp, [derp, qwerp]]"}.
 	 * 
 	 * @param string the string whose substring is to be extracted
 	 * @param startPos the index to start from
@@ -545,6 +586,37 @@ public class JSONParser
 				depth++;
 			else if (current == endChar)
 				depth--;
+			innerString.append(current);
+		}
+		return innerString;
+	}
+	
+	/**
+	 * Returns a substring surrounded by the given characters. If another start character is found and is preceded by
+	 * {@link #STRING_ESCAPE_START}, it is added and parsing continues.
+	 * For example, when given {@code ("[lol, \"\\\"herp\\\" and \\\"derp\\\" aren't words.\", "smrt"]", 6, '"')}, it will
+	 * return {@code "\"herp\" and \"derp\" aren't words."}, <STRONG>without</STRONG> the surrounding quotes.
+	 * 
+	 * @param string the string whose substring is to be extracted
+	 * @param startPos the index to start from
+	 * @param startEndChar the character that indicates the substring has started or ended
+	 * @return the substring starting at {@code startPos} and ending at its corresponding {@code startEndChar}
+	 */
+	private static CharSequence getInnerString(CharSequence string, int startPos, char startEndChar)
+	{
+		int length = string.length();
+		char prev = string.charAt(startPos), current; // prev == "
+		StringBuilder innerString = new StringBuilder("");
+		for (
+			current = string.charAt(++startPos); // increment so we don't parse or add the "
+			startPos < length;
+			prev = current,
+				current = string.charAt(++startPos))
+		{
+			if (current == startEndChar && prev != STRING_ESCAPE_START) // break on " but not \"
+				break;
+			else if (current == STRING_ESCAPE_START && prev != STRING_ESCAPE_START) // append \" as " and \\ as \
+				continue;
 			innerString.append(current);
 		}
 		return innerString;
