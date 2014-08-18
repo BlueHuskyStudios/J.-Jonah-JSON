@@ -423,7 +423,7 @@ public class JSONParser
 	{
 //		CharSequence test = new StringBuilder();
 //		File input = new File("U:\\Libraries\\Programs\\Github\\Open-Dictionary-Project\\concept.json");
-		File input = new File("test.json");
+		File input = new File("basic.json");
 		FileInputStream fis = new FileInputStream(input);
 		String json = bringIn(fis);
 //		JSONObject test = hardcodedParse(fis);
