@@ -1,0 +1,25 @@
+{
+	"string": "derp",
+	"array": ["won", "too", "tree"],
+	"basic object": {
+		"the butt": "what what"
+	},
+	"long object": {
+		"won": 1,
+		"too": "two",
+		"tree": 3.0,
+		"fore": .4
+	},
+	"complex object": {
+		"colors": ["red", "green", "blue", "alpha"],
+		"browsers": ["chrome", "Firefox", "IE", "Opera", "Safari"],
+		"anagrams": [
+			{"ates": ["east", "eats", "etas", "sate", "seat", "teas"]},
+			{"pares": ["parse", "pears", "rapes", "reaps", "spare", "spear"]}, 
+			{"capers": ["crapes", "pacers", "parsec", "recaps", "scrape", "spacer"]},
+			{"carets": ["caster", "caters", "crates", "reacts", "recast", "traces"]},
+			{"least": ["slate", "Stael", "stale", "steal", "tales", "teals", "Tesla"]}
+		]
+	},
+	"Empty JSONObject": {}
+}
