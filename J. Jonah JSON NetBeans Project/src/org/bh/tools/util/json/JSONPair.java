@@ -1,8 +1,8 @@
 package org.bh.tools.util.json;
 
+import static bht.tools.util.Do.eq;
+import static bht.tools.util.Do.s2;
 import java.util.Objects;
-import static org.bh.tools.util.json.Do.eq;
-import static org.bh.tools.util.json.Do.s2;
 
 /**
  * JSONPair, made for J. Jonah JSON NetBeans Project, is copyright Blue Husky Programming ©2013

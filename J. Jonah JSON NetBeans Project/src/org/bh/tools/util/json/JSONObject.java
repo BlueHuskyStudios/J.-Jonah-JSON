@@ -1,11 +1,11 @@
 package org.bh.tools.util.json;
 
+import static bht.tools.util.Do.eq;
+import static bht.tools.util.Do.s;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Objects;
-import static org.bh.tools.util.json.Do.eq;
-import static org.bh.tools.util.json.Do.s;
 
 /**
  * JSONPair, made for J. Jonah JSON NetBeans Project, is copyright Blue Husky Programming ©2013
