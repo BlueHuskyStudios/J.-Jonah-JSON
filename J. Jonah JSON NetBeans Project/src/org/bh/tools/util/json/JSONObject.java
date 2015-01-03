@@ -13,27 +13,51 @@ import java.util.Objects;
  * @author Kyli of Blue Husky Programming
  * @version 1.1.0
  * @since 2014-08-11
- *		- 1.1.0 (2014-08-11) Kyli Rouge added hashCode() and equals(Object)
- *		- 1.0.0 (2014-08-11) Kyli Rouge created JSONObject
+ *		+ 1.1.1 (2015-01-03) Kyli Rouge added documentation, marked pairs protected
+ *		+ 1.1.0 (2014-08-11) Kyli Rouge added hashCode() and equals(Object)
+ *		+ 1.0.0 (2014-08-11) Kyli Rouge created JSONObject
  */
 public class JSONObject implements JSONable
 {
-	HashMap<String, JSONPair> pairs;
+	protected HashMap<String, JSONPair> pairs;
 	
+	/**
+	 * Creates a new JSONObject with an empty set of pairs.
+	 */
 	public JSONObject()
 	{
 		pairs = new HashMap<>();
 	}
 	
+	/**
+	 * Returns the value of the pair whose name corresponds to the given {@link CharSequence}
+	 * @param <T> the type of value the expected pair would contain
+	 * @param name the name of the expected pair
+	 * @return the given pair, if it exists, else {@code null}
+	 */
 	public <T> T get(CharSequence name)
 	{
 		return (T)getPair(s(name)).value;
 	}
+	
+	/**
+	 * Returns the pair whose name corresponds to the given {@link CharSequence}
+	 * @param <T> the type of value the expected pair would contain
+	 * @param name the name of the expected pair
+	 * @return the given pair, if it exists, else {@code null}
+	 */
 	public <T> JSONPair<T> getPair(CharSequence name)
 	{
 		return pairs.get(s(name));
 	}
 	
+	/**
+	 * Adds or puts the given pair to this object
+	 * @param <T> the type of value to add
+	 * @param name the key for the pair
+	 * @param newValue the value for the pair
+	 * @return {@code this}
+	 */
 	@SuppressWarnings("Convert2Diamond") // I feel more secure explicitly stating it here
 	public <T> JSONObject set(CharSequence name, T newValue)
 	{
@@ -46,6 +70,14 @@ public class JSONObject implements JSONable
 		return this;
 	}
 	
+	/**
+	 * Adds the given pair
+	 * 
+	 * @deprecated {@link #set(CharSequence, Object)} provides a more robust functionality
+	 * @param <T> the type of {@link JSONPair} that is provided
+	 * @param newPair the pair to add
+	 * @return {@code this}
+	 */
 	public <T> JSONObject add(JSONPair newPair)
 	{
 		pairs.put(s(newPair.name), newPair);
